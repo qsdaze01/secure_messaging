@@ -1,3 +1,5 @@
+use std::io::Empty;
+
 //use rand::thread_rng;
 use num_bigint::{BigUint, RandBigInt};
 use num_traits:: {One, Num};
@@ -150,6 +152,20 @@ fn biguint_to_hex_string(num:BigUint) -> String {
     num.to_str_radix(16)
 }
 
+fn vec_u8_to_hex_string(vec: Vec<u8>) -> String {
+    vec.iter().map(|byte| format!("{:02x}", byte)).collect()
+}
+
+fn last_n_chars(s: &str, n: usize) -> &str {
+    let char_count = s.chars().count();
+    let start_index = s.char_indices()
+                       .rev()
+                       .nth(n - 1)
+                       .map(|(idx, _)| idx)
+                       .unwrap_or(0);
+    &s[start_index..]
+}
+
 pub fn rsaep (key:&RsaKey, m:BigUint) -> BigUint{
     let c:BigUint = m.modpow(&key.public_key.1, &key.public_key.0);
 
@@ -181,7 +197,7 @@ pub fn rsa_oaep_encrypt (key:&RsaKey, message:RsaMessage, label:String) -> Strin
 
     let one = "01";
 
-    let db = [encode(lhash), encode(String::from_utf8(ps.clone()).expect("Cannot convert")), one.to_string()/*encode((*one).to_string())*/, encode(message.message)].concat();
+    let db = [encode(lhash), encode(String::from_utf8(ps.clone()).expect("Cannot convert")), one.to_string(), encode(message.message)].concat();
     
     let mut rng = rand::thread_rng();
     let seed = rng.gen_biguint(256);
@@ -243,4 +259,145 @@ pub fn rsa_oaep_decrypt (key:&RsaKey, cipher_text:String, label:String) -> Strin
     println!("Decrypt : OK");
 
     return m.to_string();
+}
+
+pub fn emsa_pss_encode (m:RsaMessage, embits:usize) -> String {
+    let mut rng = rand::thread_rng();
+
+    let mut hasher = Sha3_256::new();
+    hasher.update(m.message);
+    let mhash = hasher.finalize();
+
+    let salt = rng.gen_biguint(256).to_str_radix(16);
+
+    let mut zero_bytes = Vec::new();
+    for _i in vec![0; 8] {
+        zero_bytes.push(0x0u8);
+    }
+
+    let m_prime = [encode(String::from_utf8(zero_bytes.clone()).expect("Cannot convert")), encode(mhash), salt.clone()].concat();
+
+    println!("M' : {}", m_prime);
+
+    let mut hasher = Sha3_256::new();
+    hasher.update(m_prime);
+    let h = hasher.finalize();
+
+    println!("H : {}", vec_u8_to_hex_string(h.to_vec()));
+
+    let lenght_ps = 2048/8 - 256/8 - 256/8 - 2 - 1;
+    let mut ps = Vec::new();
+    for _i in vec![0; lenght_ps] {
+        ps.push(0x0u8);
+    }
+
+    let one = "01";
+
+    let db = [encode(String::from_utf8(ps.clone()).expect("Cannot convert")), one.to_string(), salt.clone()].concat();
+
+    println!("DB : {}", db);
+
+    let dbmask = mgf(hex_string_to_biguint(&vec_u8_to_hex_string(h.to_vec())), 2048/8 - 256/8 - 1 - 1);
+
+    println!("DB mask : {}", dbmask);
+
+    let masked_db = vec_u8_to_hex_string(xor_strings(&db, &dbmask));
+
+    println!("Masked DB : {}", masked_db);
+
+    // Part 11 : not implemented
+
+    let bc_byte = "bc";
+
+    let em = [masked_db, vec_u8_to_hex_string(h.to_vec()), bc_byte.to_string()].concat();
+
+    return em;
+}
+
+pub fn emsa_pss_verify (m:RsaMessage, em:String, embits:usize) -> bool {
+    let mut hasher = Sha3_256::new();
+    hasher.update(m.message);
+    let mhash = hasher.finalize();
+    
+    println!("EM : {}", em);
+
+    let masked_db = &em[0..2048/4-256/4-4];
+
+    println!("Masked DB : {}", masked_db);
+
+    let h = &em[2048/4-256/4-4..2048/4-4];
+
+    let db_mask = mgf(hex_string_to_biguint(h), 2048/8-256/8-1);
+
+    println!("DB mask : {}", db_mask);
+
+    let db = vec_u8_to_hex_string(xor_strings(masked_db, &db_mask));
+
+    println!("DB : {}", db);
+
+    let salt = last_n_chars(&db, 256/4);
+
+    let mut zero_bytes = Vec::new();
+    for _i in vec![0; 8] {
+        zero_bytes.push(0x0u8);
+    }
+
+    let m_prime = [encode(String::from_utf8(zero_bytes.clone()).expect("Cannot convert")), vec_u8_to_hex_string(mhash.to_vec()), salt.to_string()].concat();
+
+    println!("M' : {}", m_prime);
+
+    let mut hasher = Sha3_256::new();
+    hasher.update(m_prime);
+    let h_prime = hasher.finalize();
+
+    println!("H : {}", h);
+    println!("H' : {}", vec_u8_to_hex_string(h_prime.to_vec()));
+
+    if h == vec_u8_to_hex_string(h_prime.to_vec()) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+pub fn rsasp1 (key:&RsaKey, m:BigUint) -> BigUint {
+    let s:BigUint = m.modpow(&key.private_key, &key.public_key.0);
+
+    return s;
+}
+
+pub fn rsavp1 (key:&RsaKey, s:BigUint) -> BigUint{
+    let m:BigUint = s.modpow(&key.public_key.1, &key.public_key.0);
+
+    return m;
+}
+
+pub fn rsassa_pss_sign (key:&RsaKey, message:RsaMessage) -> String {
+    let em:String = emsa_pss_encode(message, 2048-1);
+
+    let m = hex_string_to_biguint(&em);
+
+    let s = rsasp1(&key, m);
+
+    let s_string = biguint_to_hex_string(s);
+
+    println!("Sign : OK");
+
+    return s_string;
+}
+
+pub fn rsassa_pss_verify (key:&RsaKey, message:RsaMessage, s:String) -> String {
+    let s_int = hex_string_to_biguint(&s);
+
+    let m = rsavp1(&key, s_int);
+
+    let em = biguint_to_hex_string(m);
+
+    println!("Verify : OK");
+
+    if emsa_pss_verify(message, em, 2048/8) == true {
+        return "OK".to_string();
+    } else {
+        return "Not verified".to_string();
+    }
 }

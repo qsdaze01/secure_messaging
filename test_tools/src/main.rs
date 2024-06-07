@@ -1,5 +1,5 @@
 mod rsaes_oaep;
-use rsaes_oaep::{key_generation, RsaMessage, rsa_oaep_encrypt, rsa_oaep_decrypt};
+use rsaes_oaep::{emsa_pss_encode, key_generation, rsa_oaep_decrypt, rsa_oaep_encrypt, rsassa_pss_sign, rsassa_pss_verify, RsaMessage};
 
 fn main() {
     let key = key_generation();
@@ -11,5 +11,23 @@ fn main() {
 
     let c = rsa_oaep_encrypt(&key, message, "azer".to_string());
 
-    let _m = rsa_oaep_decrypt(&key, c, "azer".to_string());
+    let m = rsa_oaep_decrypt(&key, c, "azer".to_string());
+
+    println!("Message : {}", m);
+
+    let message2 = RsaMessage {
+        message: "wxcvbn".to_string(),
+        length: 6,
+    };
+
+    let s = rsassa_pss_sign(&key, message2);
+
+    let message3 = RsaMessage {
+        message: "wxcvbn".to_string(),
+        length: 6,
+    };
+
+    let test = rsassa_pss_verify(&key, message3, s);
+
+    println!("Test : {}", test);
 }
