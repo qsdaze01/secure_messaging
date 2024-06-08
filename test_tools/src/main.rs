@@ -2,11 +2,13 @@ mod rsaes_oaep;
 mod aes;
 pub mod utils;
 pub mod hmac;
+pub mod log;
 
 use rsaes_oaep::{key_generation, rsa_oaep_decrypt, rsa_oaep_encrypt, rsassa_pss_sign, rsassa_pss_verify, RsaMessage};
 use aes::{encrypt_aes, decrypt_aes, key_expansion_aes, display_block_aes};
 
 fn main() {
+    log::write_log("Start of the program".to_string());
     let key = key_generation();
 
     let message = RsaMessage {
