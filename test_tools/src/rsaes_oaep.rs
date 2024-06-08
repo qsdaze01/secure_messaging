@@ -1,9 +1,6 @@
-use std::io::Empty;
-
-//use rand::thread_rng;
 use num_bigint::{BigUint, RandBigInt};
 use num_traits:: {One, Num};
-use hex::{encode, decode};
+use hex::encode;
 use sha3::{Digest, Sha3_256};
 
 pub struct RsaKey {
@@ -23,7 +20,6 @@ fn primality_test(p:&BigUint) -> bool {
         let big_int_one = BigUint::one();
         let a = rand::thread_rng().gen_biguint_range(&big_int_two,&(p.clone()-big_int_two.clone()));
         if a.clone().modpow(&(p.clone()-big_int_one.clone()), &p.clone()) != big_int_one.clone() {
-            //println!("Not prime, {}", i);
             return false;
         }
     }
@@ -44,13 +40,11 @@ pub fn gen_prime_number(size_number:u64) -> BigUint{
             }
         }
         let test_prime = primality_test(temp_p);
-        //println!("Prime number ? : {}", temp_p);
         if test_prime == true {
             break;
         }
     }
 
-    //println!("Prime number : {}", p);
     return p;
 }
 
@@ -119,32 +113,29 @@ fn xor_strings(s1: &str, s2: &str) -> Vec<u8> {
 }
 
 fn hex_to_utf8_string(hex: &str) -> Result<String, Box<dyn std::error::Error>> {
-    // Vérifiez que la longueur de la chaîne hexadécimale est paire
     if hex.len() % 2 != 0 {
         return Err("La longueur de la chaîne hexadécimale doit être paire".into());
     }
 
-    // Créez un vecteur pour stocker les octets
     let mut bytes = Vec::new();
 
-    // Convertissez chaque paire hexadécimale en un octet
     for i in (0..hex.len()).step_by(2) {
         let byte = u8::from_str_radix(&hex[i..i+2], 16)?;
         bytes.push(byte);
     }
 
-    // Convertissez les octets en une chaîne UTF-8
     let utf8_string = String::from_utf8(bytes)?;
 
     Ok(utf8_string)
 }
 
+/*
 fn print_type_of<T>(_: &T) {
     println!("{}", std::any::type_name::<T>())
 }
+*/
 
 fn hex_string_to_biguint(hex: &str) -> BigUint {
-    // Utiliser from_str_radix pour convertir la chaîne hexadécimale en BigUint
     BigUint::from_str_radix(hex, 16).map_err(|e| format!("Erreur de conversion: {}", e)).expect("Erreur de conversion")
 }
 
@@ -157,7 +148,7 @@ fn vec_u8_to_hex_string(vec: Vec<u8>) -> String {
 }
 
 fn last_n_chars(s: &str, n: usize) -> &str {
-    let char_count = s.chars().count();
+    let _char_count = s.chars().count();
     let start_index = s.char_indices()
                        .rev()
                        .nth(n - 1)
@@ -204,7 +195,7 @@ pub fn rsa_oaep_encrypt (key:&RsaKey, message:RsaMessage, label:String) -> Strin
 
     let dbmask = mgf(seed.clone(), 2048/8-256/8-1);
 
-    let masked_db = xor_strings(&db, &dbmask);
+    let _masked_db = xor_strings(&db, &dbmask);
     let masked_db_string:String = xor_strings(&db, &dbmask).iter().map(|byte| format!("{:02x}", byte)).collect::<Vec<_>>().concat().into();
 
     let seed_mask = mgf(hex_string_to_biguint(&masked_db_string), 32);
@@ -218,8 +209,6 @@ pub fn rsa_oaep_encrypt (key:&RsaKey, message:RsaMessage, label:String) -> Strin
     let c = rsaep(key, m);
 
     let c_hex = biguint_to_hex_string(c);
-
-    println!("Encrypt : OK");
 
     return c_hex;
 }
@@ -247,7 +236,7 @@ pub fn rsa_oaep_decrypt (key:&RsaKey, cipher_text:String, label:String) -> Strin
     
     let db:String = xor_strings(masked_db, &dbmask).iter().map(|byte| format!("{:02x}", byte)).collect();
 
-    let db_without_hash = &db[256/4..];
+    let _db_without_hash = &db[256/4..];
 
     let mut iter:usize = 0;
 
@@ -256,12 +245,11 @@ pub fn rsa_oaep_decrypt (key:&RsaKey, cipher_text:String, label:String) -> Strin
     }
     let m = hex_to_utf8_string(&db[256/4+iter+1..]).expect("Error conversion");
     
-    println!("Decrypt : OK");
-
     return m.to_string();
 }
 
 pub fn emsa_pss_encode (m:RsaMessage, embits:usize) -> String {
+    let _ = embits;
     let mut rng = rand::thread_rng();
 
     let mut hasher = Sha3_256::new();
@@ -277,13 +265,9 @@ pub fn emsa_pss_encode (m:RsaMessage, embits:usize) -> String {
 
     let m_prime = [encode(String::from_utf8(zero_bytes.clone()).expect("Cannot convert")), encode(mhash), salt.clone()].concat();
 
-    println!("M' : {}", m_prime);
-
     let mut hasher = Sha3_256::new();
     hasher.update(m_prime);
     let h = hasher.finalize();
-
-    println!("H : {}", vec_u8_to_hex_string(h.to_vec()));
 
     let lenght_ps = 2048/8 - 256/8 - 256/8 - 2 - 1;
     let mut ps = Vec::new();
@@ -295,15 +279,9 @@ pub fn emsa_pss_encode (m:RsaMessage, embits:usize) -> String {
 
     let db = [encode(String::from_utf8(ps.clone()).expect("Cannot convert")), one.to_string(), salt.clone()].concat();
 
-    println!("DB : {}", db);
-
     let dbmask = mgf(hex_string_to_biguint(&vec_u8_to_hex_string(h.to_vec())), 2048/8 - 256/8 - 1 - 1);
 
-    println!("DB mask : {}", dbmask);
-
     let masked_db = vec_u8_to_hex_string(xor_strings(&db, &dbmask));
-
-    println!("Masked DB : {}", masked_db);
 
     // Part 11 : not implemented
 
@@ -315,25 +293,18 @@ pub fn emsa_pss_encode (m:RsaMessage, embits:usize) -> String {
 }
 
 pub fn emsa_pss_verify (m:RsaMessage, em:String, embits:usize) -> bool {
+    let _ = embits;
     let mut hasher = Sha3_256::new();
     hasher.update(m.message);
     let mhash = hasher.finalize();
     
-    println!("EM : {}", em);
-
     let masked_db = &em[0..2048/4-256/4-4];
-
-    println!("Masked DB : {}", masked_db);
 
     let h = &em[2048/4-256/4-4..2048/4-4];
 
     let db_mask = mgf(hex_string_to_biguint(h), 2048/8-256/8-1);
 
-    println!("DB mask : {}", db_mask);
-
     let db = vec_u8_to_hex_string(xor_strings(masked_db, &db_mask));
-
-    println!("DB : {}", db);
 
     let salt = last_n_chars(&db, 256/4);
 
@@ -344,14 +315,9 @@ pub fn emsa_pss_verify (m:RsaMessage, em:String, embits:usize) -> bool {
 
     let m_prime = [encode(String::from_utf8(zero_bytes.clone()).expect("Cannot convert")), vec_u8_to_hex_string(mhash.to_vec()), salt.to_string()].concat();
 
-    println!("M' : {}", m_prime);
-
     let mut hasher = Sha3_256::new();
     hasher.update(m_prime);
     let h_prime = hasher.finalize();
-
-    println!("H : {}", h);
-    println!("H' : {}", vec_u8_to_hex_string(h_prime.to_vec()));
 
     if h == vec_u8_to_hex_string(h_prime.to_vec()) {
         return true;
@@ -381,8 +347,6 @@ pub fn rsassa_pss_sign (key:&RsaKey, message:RsaMessage) -> String {
 
     let s_string = biguint_to_hex_string(s);
 
-    println!("Sign : OK");
-
     return s_string;
 }
 
@@ -392,8 +356,6 @@ pub fn rsassa_pss_verify (key:&RsaKey, message:RsaMessage, s:String) -> String {
     let m = rsavp1(&key, s_int);
 
     let em = biguint_to_hex_string(m);
-
-    println!("Verify : OK");
 
     if emsa_pss_verify(message, em, 2048/8) == true {
         return "OK".to_string();

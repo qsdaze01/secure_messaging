@@ -1,5 +1,9 @@
 mod rsaes_oaep;
-use rsaes_oaep::{emsa_pss_encode, key_generation, rsa_oaep_decrypt, rsa_oaep_encrypt, rsassa_pss_sign, rsassa_pss_verify, RsaMessage};
+mod aes;
+
+use rsaes_oaep::{key_generation, rsa_oaep_decrypt, rsa_oaep_encrypt, rsassa_pss_sign, rsassa_pss_verify, RsaMessage};
+use aes::{encrypt_aes, decrypt_aes, key_expansion_aes, display_block_aes};
+
 
 fn main() {
     let key = key_generation();
@@ -30,4 +34,23 @@ fn main() {
     let test = rsassa_pss_verify(&key, message3, s);
 
     println!("Test : {}", test);
+
+    let mut block:[u8;16] = [0;16];
+    let round_key:[u8;176] = [0;176];
+    
+    let key:[u8;16] = [
+        0x02, 0x03, 0x01, 0x01,
+        0x01, 0x02, 0x03, 0x01,
+        0x01, 0x01, 0x02, 0x03,
+        0x03, 0x01, 0x01, 0x02
+    ];
+
+    for i in 0..16 {
+        block[i] =  0x01;
+    }
+    
+    key_expansion_aes(key.to_vec(), round_key.to_vec());
+    encrypt_aes(block.to_vec(), round_key.to_vec());
+    decrypt_aes(block.to_vec(), round_key.to_vec());
+    display_block_aes(block.to_vec());
 }
