@@ -116,3 +116,10 @@ pub fn key_generation_aes_128(key:&mut Vec<u8>) {
     }
 }
 
+pub fn key_generation_hmac(key:&mut Vec<u8>) {
+    let mut rng = rand::thread_rng();
+
+    for i in 0..32 {
+        key[i] = rng.gen_range(0..=255);
+    }
+}
