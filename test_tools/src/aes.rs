@@ -109,14 +109,14 @@ fn inv_shift_rows(block:&mut Vec<u8>) {
 fn g_mul(mut a:u8, mut b:u8) -> u8{ 
     let mut p:u8 = 0;
 
-    for _ in (1..=8) {
-        if ((b & 1) != 0) {
+    for _ in 1..=8 {
+        if (b & 1) != 0 {
             p ^= a;
         }
 
         let hi_bit_set:bool = (a & 0x80) != 0;
         a <<= 1;
-        if (hi_bit_set) {
+        if hi_bit_set {
             a ^= 0x1B; /* x^8 + x^4 + x^3 + x + 1 */
         }
         b >>= 1;
@@ -133,9 +133,9 @@ fn mix_columns(block:&mut Vec<u8>){
         0x03, 0x01, 0x01, 0x02
     ];
 
-    for i in (1..=4) {
+    for i in 1..=4 {
         let column = [block[4*0 + i-1], block[4*1 + i-1], block[4*2 + i-1], block[4*3 + i-1]];
-        for j in (1..=4) {
+        for j in 1..=4 {
             block[i-1 + 4*(j-1)] = g_mul(gf2[4*(j-1) + 0], column[0])^g_mul(gf2[4*(j-1) + 1], column[1])^g_mul(gf2[4*(j-1) + 2], column[2])^g_mul(gf2[4*(j-1) + 3], column[3]);
         }
     }
@@ -149,16 +149,16 @@ fn inv_mix_columns(block:&mut Vec<u8>) {
         0x0b, 0x0d, 0x09, 0x0e
     ];
 
-    for i in (1..=4) {
+    for i in 1..=4 {
         let column = [block[4*0 + i-1], block[4*1 + i-1], block[4*2 + i-1], block[4*3 + i-1]];
-        for j in (1..=4) {
+        for j in 1..=4 {
             block[i-1 + 4*(j-1)] = g_mul(inv_gf2[4*(j-1) + 0], column[0])^g_mul(inv_gf2[4*(j-1) + 1], column[1])^g_mul(inv_gf2[4*(j-1) + 2], column[2])^g_mul(inv_gf2[4*(j-1) + 3], column[3]);
         }
     }
 }
 
 fn add_round_key(block:&mut Vec<u8>, round_key:Vec<u8>) {
-    for i in (1..=16) {
+    for i in 1..=16 {
         block[i-1] = block[i-1]^round_key[i-1];
     }
 }
@@ -167,20 +167,20 @@ pub fn encrypt_aes(mut plaintext:Vec<u8>, key:Vec<u8>) {
     let mut temp_key:[u8;16] = [0;16];
 
     /* Initial round */
-    for i in (1..=4) {
-        for j in (1..=4) {
+    for i in 1..=4 {
+        for j in 1..=4 {
             temp_key[i-1 + 4*(j-1)] = key[i-1 + 44*(j-1)];
         }
     }
     add_round_key(&mut plaintext, temp_key.to_vec());
 
     /* 9 rounds */
-    for k in (1..=9) {
+    for k in 1..=9 {
         sub_bytes(&mut plaintext);
         shift_rows(&mut plaintext);
         mix_columns(&mut plaintext);
-        for i in (1..=4) {
-            for j in (1..=4) {
+        for i in 1..=4 {
+            for j in 1..=4 {
                 temp_key[4*(i-1) + j-1] = key[44*(i-1) + j-1 + 4*k];
             }
         }
@@ -190,8 +190,8 @@ pub fn encrypt_aes(mut plaintext:Vec<u8>, key:Vec<u8>) {
     /* Last round */
     sub_bytes(&mut plaintext);
     shift_rows(&mut plaintext);
-    for i in (1..=4) {
-        for j in (1..=4) {
+    for i in 1..=4 {
+        for j in 1..=4 {
             temp_key[4*(i-1) + j-1] = key[44*(i-1) + j-1 + 40];
         }
     }
@@ -202,19 +202,19 @@ pub fn decrypt_aes(mut plaintext:Vec<u8>, key:Vec<u8>) {
     let mut temp_key:[u8;16] = [0;16];
 
     /* Initial round */
-    for i in (1..=4) {
-        for j in (1..=4) {
+    for i in 1..=4 {
+        for j in 1..=4 {
             temp_key[i-1 + 4*(j-1)] = key[40 + i-1 + 44*(j-1)];
         }
     }
     add_round_key(&mut plaintext, temp_key.to_vec());
 
     /* 9 rounds */
-    for k in (1..=9) {
+    for k in 1..=9 {
         inv_shift_rows(&mut plaintext);
         inv_sub_bytes(&mut plaintext);
-        for i in (1..=4) {
-            for j in (1..=4) {
+        for i in 1..=4 {
+            for j in 1..=4 {
                 temp_key[4*(i-1) + j-1] = key[44*(i-1) + j-1 + 4*(9-(k-1))];
             }
         }
@@ -225,8 +225,8 @@ pub fn decrypt_aes(mut plaintext:Vec<u8>, key:Vec<u8>) {
     /* Last round */
     inv_shift_rows(&mut plaintext);
     inv_sub_bytes(&mut plaintext);
-    for i in (1..=4) {
-        for j in (1..=4) {
+    for i in 1..=4 {
+        for j in 1..=4 {
             temp_key[4*(i-1) + j-1] = key[44*(i-1) + j-1];
         }
     }
@@ -241,24 +241,24 @@ pub fn key_expansion_aes(key:Vec<u8>, mut round_key:Vec<u8>) {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     ];
 
-    for i in (1..=44) {
-        if (i-1 < 4) {
-            for j in (1..=4) {
+    for i in 1..=44 {
+        if i-1 < 4 {
+            for j in 1..=4 {
                 round_key[i-1 + 44*(j-1)] = key[i-1 + 4*(j-1)];
             }
-        } else if ((i-1)%4 == 0) {
+        } else if (i-1)%4 == 0 {
             let mut word:Vec<u8> = [round_key[(i-1-1) + 44*0],round_key[(i-1-1) + 44*1],round_key[(i-1-1) + 44*2],round_key[(i-1-1) + 44*3]].to_vec(); 
 
             rotate(&mut word, 0);
             sub_bytes_column(&mut word); 
-            for j in (1..=4) {
+            for j in 1..=4 {
                 round_key[i-1 + 44*(j-1)] = round_key[i-1 + 44*(j-1) - 4]^word[j-1]^r_con[(i-1-4)/4 + 10*(j-1)];
             }
-            for j in (1..=4) {
+            for _j in 1..=4 {
                 //printf("%#4x \n", r_con[(i-4)/4 + 10*j]);
             }
         } else {
-            for j in (1..=4) {
+            for j in 1..=4 {
                 round_key[i-1 + 44*(j-1)] = round_key[i-1 + 44*(j-1) - 4]^round_key[i-1 + 44*(j-1) - 1];
             }
         }
@@ -266,8 +266,8 @@ pub fn key_expansion_aes(key:Vec<u8>, mut round_key:Vec<u8>) {
 }
 
 pub fn display_block_aes(block:Vec<u8>) {
-    for i in (1..=4) {
-        for j in (1..=4) {
+    for i in 1..=4 {
+        for j in 1..=4 {
             print!("| {} ", block[4*(i-1) + j-1]);
         }
         println!("");
@@ -275,9 +275,9 @@ pub fn display_block_aes(block:Vec<u8>) {
 }
 
 pub fn display_round_key_aes(round_key:Vec<u8>) {
-    for k in (1..=11) {
-        for i in (1..=4) {
-            for j in (1..=4) {
+    for k in 1..=11 {
+        for i in 1..=4 {
+            for j in 1..=4 {
                 print!("| {} ", round_key[44*(i-1) + j-1 + 4*(k-1)]);
             }
         }

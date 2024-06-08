@@ -1,5 +1,5 @@
 use num_bigint::{BigUint, RandBigInt};
-use num_traits:: {One, Num};
+use num_traits:: One;
 use hex::encode;
 use sha3::{Digest, Sha3_256};
 use crate::utils;//::{gen_prime_number, xor_strings, hex_to_utf8_string, hex_string_to_biguint, biguint_to_hex_string, vec_u8_to_hex_string, last_n_chars};

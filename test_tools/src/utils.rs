@@ -1,5 +1,8 @@
+use std::u8;
+
 use num_bigint::{BigUint, RandBigInt};
 use num_traits:: {One, Num};
+use rand::Rng;
 
 pub fn primality_test(p:&BigUint) -> bool {
     let s = [0, 1, 2];
@@ -105,5 +108,11 @@ pub fn last_n_chars(s: &str, n: usize) -> &str {
     &s[start_index..]
 }
 
+pub fn key_generation_aes_128(key:&mut Vec<u8>) {
+    let mut rng = rand::thread_rng();
 
+    for i in 0..16 {
+        key[i] = rng.gen_range(0..=255);
+    }
+}
 
