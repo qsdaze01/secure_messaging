@@ -5,8 +5,8 @@ use sha3::{Digest, Sha3_256};
 use crate::utils;//::{gen_prime_number, xor_strings, hex_to_utf8_string, hex_string_to_biguint, biguint_to_hex_string, vec_u8_to_hex_string, last_n_chars};
 
 pub struct RsaKey {
-    private_key: BigUint,
-    public_key: (BigUint, BigUint),
+    pub private_key: BigUint,
+    pub public_key: (BigUint, BigUint),
 }
 
 pub struct RsaMessage {
