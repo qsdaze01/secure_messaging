@@ -163,7 +163,7 @@ fn add_round_key(block:&mut Vec<u8>, round_key:Vec<u8>) {
     }
 }
 
-pub fn encrypt_aes(mut plaintext:Vec<u8>, key:Vec<u8>) {
+pub fn encrypt_aes(plaintext:&mut Vec<u8>, key:Vec<u8>) {
     let mut temp_key:[u8;16] = [0;16];
 
     /* Initial round */
@@ -172,33 +172,33 @@ pub fn encrypt_aes(mut plaintext:Vec<u8>, key:Vec<u8>) {
             temp_key[i-1 + 4*(j-1)] = key[i-1 + 44*(j-1)];
         }
     }
-    add_round_key(&mut plaintext, temp_key.to_vec());
+    add_round_key(plaintext, temp_key.to_vec());
 
     /* 9 rounds */
     for k in 1..=9 {
-        sub_bytes(&mut plaintext);
-        shift_rows(&mut plaintext);
-        mix_columns(&mut plaintext);
+        sub_bytes(plaintext);
+        shift_rows(plaintext);
+        mix_columns(plaintext);
         for i in 1..=4 {
             for j in 1..=4 {
                 temp_key[4*(i-1) + j-1] = key[44*(i-1) + j-1 + 4*k];
             }
         }
-        add_round_key(&mut plaintext, temp_key.to_vec());
+        add_round_key(plaintext, temp_key.to_vec());
     }
 
     /* Last round */
-    sub_bytes(&mut plaintext);
-    shift_rows(&mut plaintext);
+    sub_bytes(plaintext);
+    shift_rows(plaintext);
     for i in 1..=4 {
         for j in 1..=4 {
             temp_key[4*(i-1) + j-1] = key[44*(i-1) + j-1 + 40];
         }
     }
-    add_round_key(&mut plaintext, temp_key.to_vec());
+    add_round_key(plaintext, temp_key.to_vec());
 }
 
-pub fn decrypt_aes(mut plaintext:Vec<u8>, key:Vec<u8>) {
+pub fn decrypt_aes(plaintext:&mut Vec<u8>, key:Vec<u8>) {
     let mut temp_key:[u8;16] = [0;16];
 
     /* Initial round */
@@ -207,30 +207,30 @@ pub fn decrypt_aes(mut plaintext:Vec<u8>, key:Vec<u8>) {
             temp_key[i-1 + 4*(j-1)] = key[40 + i-1 + 44*(j-1)];
         }
     }
-    add_round_key(&mut plaintext, temp_key.to_vec());
+    add_round_key(plaintext, temp_key.to_vec());
 
     /* 9 rounds */
     for k in 1..=9 {
-        inv_shift_rows(&mut plaintext);
-        inv_sub_bytes(&mut plaintext);
+        inv_shift_rows(plaintext);
+        inv_sub_bytes(plaintext);
         for i in 1..=4 {
             for j in 1..=4 {
                 temp_key[4*(i-1) + j-1] = key[44*(i-1) + j-1 + 4*(9-(k-1))];
             }
         }
-        add_round_key(&mut plaintext, temp_key.to_vec());
-        inv_mix_columns(&mut plaintext);
+        add_round_key(plaintext, temp_key.to_vec());
+        inv_mix_columns(plaintext);
     }
 
     /* Last round */
-    inv_shift_rows(&mut plaintext);
-    inv_sub_bytes(&mut plaintext);
+    inv_shift_rows(plaintext);
+    inv_sub_bytes(plaintext);
     for i in 1..=4 {
         for j in 1..=4 {
             temp_key[4*(i-1) + j-1] = key[44*(i-1) + j-1];
         }
     }
-    add_round_key(&mut plaintext, temp_key.to_vec());
+    add_round_key(plaintext, temp_key.to_vec());
 }
 
 pub fn key_expansion_aes(key:Vec<u8>, mut round_key:Vec<u8>) {

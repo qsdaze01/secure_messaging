@@ -5,6 +5,7 @@ pub mod hmac;
 pub mod log;
 pub mod challenge;
 pub mod identify_db;
+pub mod cts_cbc;
 
 use rsaes_oaep::{key_generation, rsa_oaep_decrypt, rsa_oaep_encrypt, rsassa_pss_sign, rsassa_pss_verify, RsaMessage};
 use aes::{encrypt_aes, decrypt_aes, key_expansion_aes, display_block_aes};
@@ -56,8 +57,8 @@ fn main() {
     }
     
     key_expansion_aes(key.to_vec(), round_key.to_vec());
-    encrypt_aes(block.to_vec(), round_key.to_vec());
-    decrypt_aes(block.to_vec(), round_key.to_vec());
+    encrypt_aes(&mut block.to_vec(), round_key.to_vec());
+    decrypt_aes(&mut block.to_vec(), round_key.to_vec());
     display_block_aes(block.to_vec());
 
     let key_hmac:[u8;32] = [0;32];
