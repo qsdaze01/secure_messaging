@@ -30,3 +30,11 @@ pub fn compute_hmac(key:String, text:String) -> String {
 
     return vec_u8_to_hex_string(hmac.to_vec());
 }
+
+pub fn check_hmac(received_hmac:String, computed_hmac:String) -> bool {
+    if received_hmac == computed_hmac {
+        return true;
+    } else {
+        return false;
+    }
+}
