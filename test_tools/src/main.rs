@@ -6,8 +6,10 @@ pub mod log;
 pub mod challenge;
 pub mod identify_db;
 pub mod cts_cbc;
+pub mod pbkdf2;
 
 use cts_cbc::{decrypt_cts_cbc, encrypt_cts_cbc};
+use pbkdf2::compute_derivate_key;
 use rsaes_oaep::{key_generation, rsa_oaep_decrypt, rsa_oaep_encrypt, rsassa_pss_sign, rsassa_pss_verify, RsaMessage};
 use utils::vec_u8_to_hex_string;
 //use aes::{encrypt_aes, decrypt_aes, key_expansion_aes, display_block_aes};
@@ -67,6 +69,8 @@ fn main() {
     println!("Ciphertext : {}", ciphertext);
     let receive_message = decrypt_cts_cbc(ciphertext, key.clone(), iv);
     println!("Received message : {}", receive_message);
+
+    println!("Derivated key : {}", compute_derivate_key("4164afcd49179b12".to_string(), "49165084adec4561".to_string(), 5000, 128));
 
     /*
     let key_hmac:[u8;32] = [0;32];
