@@ -7,8 +7,13 @@ pub mod challenge;
 pub mod identify_db;
 pub mod cts_cbc;
 pub mod pbkdf2;
+pub mod message;
 
+use std::sync::Arc;
+
+use chrono::{DateTime, Utc};
 use cts_cbc::{decrypt_cts_cbc, encrypt_cts_cbc};
+use message::receive_string_to_message;
 use pbkdf2::compute_derivate_key;
 use rsaes_oaep::{key_generation, rsa_oaep_decrypt, rsa_oaep_encrypt, rsassa_pss_sign, rsassa_pss_verify, RsaMessage};
 use utils::{hex_string_to_utf8, utf8_to_hex_string, vec_u8_to_hex_string};
@@ -16,6 +21,15 @@ use utils::{hex_string_to_utf8, utf8_to_hex_string, vec_u8_to_hex_string};
 
 fn main() {
     log::write_log("Start of the program".to_string());
+    
+    let now_utc: DateTime<Utc> = Utc::now();
+    println!("Heure UTC actuelle : {}", now_utc);
+
+    //let now_utc = OffsetDateTime::now_utc();
+    //println!("L'heure actuelle en UTC est : {}", now_utc);
+    
+    //receive_string_to_message("a0gpdhfgiof|bgfdnibndfoib|jgidosbnjdofb|gfdsohugfo".to_owned());
+
     /*
     let key = key_generation();
 
