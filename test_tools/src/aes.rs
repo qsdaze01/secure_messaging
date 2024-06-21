@@ -250,9 +250,6 @@ pub fn key_expansion_aes(key:Vec<u8>, round_key:&mut Vec<u8>) {
             for j in 1..=4 {
                 round_key[i-1 + 44*(j-1)] = round_key[i-1 + 44*(j-1) - 4]^word[j-1]^r_con[(i-1-4)/4 + 10*(j-1)];
             }
-            for _j in 1..=4 {
-                //printf("%#4x \n", r_con[(i-4)/4 + 10*j]);
-            }
         } else {
             for j in 1..=4 {
                 round_key[i-1 + 44*(j-1)] = round_key[i-1 + 44*(j-1) - 4]^round_key[i-1 + 44*(j-1) - 1];

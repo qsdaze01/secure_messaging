@@ -98,6 +98,33 @@ pub fn vec_u8_to_hex_string(vec: Vec<u8>) -> String {
     vec.iter().map(|byte| format!("{:02x}", byte)).collect()
 }
 
+pub fn utf8_to_hex_string(input: &str) -> String {
+    input
+        .as_bytes()
+        .iter()
+        .map(|byte| format!("{:02x}", byte))
+        .collect()
+}
+
+pub fn hex_string_to_utf8(hex_input: &str) -> Result<String, &'static str> {
+    if hex_input.len() % 2 != 0 {
+        return Err("Invalid hex string length");
+    }
+
+    let bytes_result: Result<Vec<u8>, _> = (0..hex_input.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&hex_input[i..i+2], 16))
+        .collect();
+
+    match bytes_result {
+        Ok(bytes) => match String::from_utf8(bytes) {
+            Ok(utf8_string) => Ok(utf8_string),
+            Err(_) => Err("Invalid UTF-8 sequence"),
+        },
+        Err(_) => Err("Invalid hex digit"),
+    }
+}
+
 pub fn last_n_chars(s: &str, n: usize) -> &str {
     let _char_count = s.chars().count();
     let start_index = s.char_indices()
