@@ -2,6 +2,7 @@ use chrono::{NaiveDateTime, Utc};
 use std::io;
 use crate::{cts_cbc::{decrypt_cts_cbc, encrypt_cts_cbc}, hmac::{check_hmac, compute_hmac}, utils::{hex_string_to_utf8, utf8_to_hex_string}};
 
+#[derive(Debug)]
 pub struct Message {
     pub destination : String,
     pub source : String,
@@ -17,8 +18,8 @@ pub fn stringify_message_object(message: Message) -> String {
 pub fn receive_string_to_message_object(received_message: String) -> Message{
     let res = received_message.split("|").collect::<Vec<&str>>();
 
-    let time_str = format!("1970-01-01 {}", res[4]);
-    let timestamp = NaiveDateTime::parse_from_str(&time_str, "%Y-%m-%d %H:%M:%S").expect("Erreur lors du parsing du timestamp");
+    let time_str = format!("{}", res[4]);
+    let timestamp = NaiveDateTime::parse_from_str(&time_str, "%Y-%m-%d %H:%M:%S%.f").expect("Erreur lors du parsing du timestamp");
 
     let message = Message{
         destination: res[0].to_owned(),

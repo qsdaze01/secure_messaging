@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
 use cts_cbc::{decrypt_cts_cbc, encrypt_cts_cbc};
-use message::receive_string_to_message_object;
+use message::{get_message_to_send, get_received_message, receive_string_to_message_object};
 use pbkdf2::compute_derivate_key;
 use rsaes_oaep::{key_generation, rsa_oaep_decrypt, rsa_oaep_encrypt, rsassa_pss_sign, rsassa_pss_verify, RsaMessage};
 use utils::{hex_string_to_utf8, utf8_to_hex_string, vec_u8_to_hex_string};
@@ -78,6 +78,12 @@ fn main() {
     //encrypt_aes(&mut block.to_vec(), round_key.to_vec());
     //decrypt_aes(&mut block.to_vec(), round_key.to_vec());
     //display_block_aes(block.to_vec());
+
+    let message_to_send = get_message_to_send("123456".to_owned(), "123456".to_owned(), "987654".to_owned(), key.clone(), vec_u8_to_hex_string(key.clone()));
+    println!("Message to send : {}", message_to_send);
+    let received_message = get_received_message(message_to_send, key.clone(), vec_u8_to_hex_string(key.clone()));
+    println!("Received message : {:?}", received_message.unwrap());
+
     println!("Start key : {}", vec_u8_to_hex_string(key.clone()));
     let (ciphertext, iv) = encrypt_cts_cbc("1234567890".to_owned(), key.clone());
     println!("Ciphertext : {}", ciphertext);
