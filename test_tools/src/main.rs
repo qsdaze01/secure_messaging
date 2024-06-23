@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
 use cts_cbc::{decrypt_cts_cbc, encrypt_cts_cbc};
-use message::receive_string_to_message;
+use message::receive_string_to_message_object;
 use pbkdf2::compute_derivate_key;
 use rsaes_oaep::{key_generation, rsa_oaep_decrypt, rsa_oaep_encrypt, rsassa_pss_sign, rsassa_pss_verify, RsaMessage};
 use utils::{hex_string_to_utf8, utf8_to_hex_string, vec_u8_to_hex_string};
