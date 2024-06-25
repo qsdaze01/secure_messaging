@@ -13,3 +13,4 @@ First messages are encrypted in an asymmetric way
 - Faire implémentation aes-256
 - Faire implémentation hmac-512
 - Faire base de données enregistrement des messages de façon sécurisée (une côté serveur pour la sauvegarde des messages et une du côté client)
+

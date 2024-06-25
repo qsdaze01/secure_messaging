@@ -9,7 +9,6 @@ pub mod cts_cbc;
 pub mod pbkdf2;
 pub mod message;
 
-
 use chrono::{DateTime, Utc};
 use cts_cbc::{decrypt_cts_cbc, encrypt_cts_cbc};
 use message::{get_message_to_send, get_received_message};
