@@ -41,7 +41,7 @@ pub fn write_db_id(id:String, key_challenge: &RsaKey, key_encryption: &RsaKey) {
     };
 
     conn.execute(
-        "INSERT INTO clients (id, key_n, key_e) VALUES (?1, ?2, ?3)",
+        "INSERT INTO clients (id, key_challenge_n, key_challenge_e, key_encryption_n, key_encryption_e) VALUES (?1, ?2, ?3, ?4, ?5)",
         (&id, &client.key_challenge_n, &client.key_challenge_e, &client.key_encryption_n, &client.key_encryption_e),
     ).expect("Error Insert");
 

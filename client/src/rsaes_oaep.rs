@@ -4,6 +4,7 @@ use hex::encode;
 use sha3::{Digest, Sha3_256};
 use crate::utils;//::{gen_prime_number, xor_strings, hex_to_utf8_string, hex_string_to_biguint, biguint_to_hex_string, vec_u8_to_hex_string, last_n_chars};
 
+#[derive(Debug)]
 pub struct RsaKey {
     pub private_key: BigUint,
     pub public_key: (BigUint, BigUint),
@@ -113,7 +114,10 @@ pub fn rsa_oaep_decrypt (key:&RsaKey, cipher_text:String, label:String) -> Strin
 
     let m = rsadp(key, c);
 
-    let em = utils::biguint_to_hex_string(m);
+    let mut em = utils::biguint_to_hex_string(m);
+    if em.len() < 512 {
+        em = '0'.to_string() + &em;
+    }
 
     let mut hasher = Sha3_256::new();
     hasher.update(label);
@@ -129,6 +133,9 @@ pub fn rsa_oaep_decrypt (key:&RsaKey, cipher_text:String, label:String) -> Strin
 
     let dbmask = mgf(utils::hex_string_to_biguint(&String::from_utf8(seed.into()).expect("Error conversion")), 2048/8-256/8-1);
     
+    println!("EM : {} {}", em.len(), em);
+    println!("Masked db : {} {}", masked_db.len(), masked_db);
+    println!("Db mask : {} {}", dbmask.len(), dbmask);
     let db:String = utils::xor_strings(masked_db, &dbmask).iter().map(|byte| format!("{:02x}", byte)).collect();
 
     let _db_without_hash = &db[256/4..];
@@ -138,7 +145,8 @@ pub fn rsa_oaep_decrypt (key:&RsaKey, cipher_text:String, label:String) -> Strin
     while db.chars().nth(256/4+iter).expect("Error char") == '0'{
         iter = iter + 1;
     }
-    let m = utils::hex_to_utf8_string(&db[256/4+iter+1..]).expect("Error conversion");
+    println!("Test parité : {}", &db[256/4+iter+1..].len());
+    let m = &db[256/4+iter+1..]; //utils::hex_to_utf8_string(&db[256/4+iter+2..]).expect("Error conversion");
     
     return m.to_string();
 }

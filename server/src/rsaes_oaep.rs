@@ -4,6 +4,7 @@ use hex::encode;
 use sha3::{Digest, Sha3_256};
 use crate::utils;//::{gen_prime_number, xor_strings, hex_to_utf8_string, hex_string_to_biguint, biguint_to_hex_string, vec_u8_to_hex_string, last_n_chars};
 
+#[derive(Debug)]
 pub struct RsaKey {
     pub private_key: BigUint,
     pub public_key: (BigUint, BigUint),
@@ -91,12 +92,17 @@ pub fn rsa_oaep_encrypt (key:&RsaKey, message:RsaMessage, label:String) -> Strin
     let dbmask = mgf(seed.clone(), 2048/8-256/8-1);
 
     let _masked_db = utils::xor_strings(&db, &dbmask);
+
     let masked_db_string:String = utils::xor_strings(&db, &dbmask).iter().map(|byte| format!("{:02x}", byte)).collect::<Vec<_>>().concat().into();
 
     let seed_mask = mgf(utils::hex_string_to_biguint(&masked_db_string), 32);
 
-    let masked_seed:String = utils::xor_strings(&seed.to_str_radix(16), &seed_mask).iter().map(|byte| format!("{:02x}", byte)).collect::<Vec<_>>().concat().into();
-
+    let masked_seed:String;
+    if seed.to_str_radix(16).len() < 64 {
+        masked_seed = utils::xor_strings(&('0'.to_string() + &seed.to_str_radix(16)), &seed_mask).iter().map(|byte| format!("{:02x}", byte)).collect::<Vec<_>>().concat().into();
+    } else {
+        masked_seed = utils::xor_strings(&seed.to_str_radix(16), &seed_mask).iter().map(|byte| format!("{:02x}", byte)).collect::<Vec<_>>().concat().into();
+    }
     let em = [0x0.to_string(), 0x0.to_string(), masked_seed.clone(), masked_db_string.clone()].concat();
 
     let m = utils::hex_string_to_biguint(&em);
@@ -105,7 +111,11 @@ pub fn rsa_oaep_encrypt (key:&RsaKey, message:RsaMessage, label:String) -> Strin
 
     let c_hex = utils::biguint_to_hex_string(c);
 
-    return c_hex;
+    if c_hex.len() < 512 {
+        return '0'.to_string() + &c_hex;
+    } else {
+        return c_hex;
+    }
 }
 
 pub fn rsa_oaep_decrypt (key:&RsaKey, cipher_text:String, label:String) -> String {

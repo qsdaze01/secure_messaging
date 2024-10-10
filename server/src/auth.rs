@@ -11,24 +11,38 @@ pub fn auth_client(stream: &mut TcpStream, server_challenge_key: &RsaKey, server
 
     receive(&mut buffer, stream);
 
-    let binding = vec_u8_to_hex_string(buffer.to_vec());
-    let id_and_public_key = binding.split("|").collect::<Vec<&str>>();
-    
+    let binding: String = vec_u8_to_hex_string(buffer.to_vec());
+
+    let size_id:usize = binding.chars().nth(0).unwrap().to_digit(10).unwrap().try_into().unwrap();
+
+    println!("{:#?}", binding.chars().nth(0));
+
     let client_rsa_challenge = RsaKey {
         private_key: BigUint::from(0u32),
-        public_key: (hex_string_to_biguint(id_and_public_key[1]), hex_string_to_biguint(id_and_public_key[2])),
+        public_key: (hex_string_to_biguint(&binding.chars().skip(1+size_id).take(512).collect::<String>()), hex_string_to_biguint(&binding.chars().skip(1+size_id+512).take(5).collect::<String>())),
     };
-
-    let mut challenge = vec![0, 32];
+    println!("ID : {:#?}", binding.chars().skip(1).take(size_id).collect::<String>());
+    println!("{:#?}", client_rsa_challenge.public_key.0);
+    println!("{:#?}", client_rsa_challenge.public_key.1);
+    
+    println!("Before creation challenge");
+    let mut challenge = vec![0; 32];
     challenge_generation(&mut challenge);
 
     let rsa_challenge = create_challenge(&client_rsa_challenge, vec_u8_to_hex_string(challenge.clone()));
     
+    println!("{:#?}", rsa_challenge);
+    println!("Challenge created : {}", rsa_challenge.len());
+
     send(&mut hex_string_to_bytes(&rsa_challenge), stream);
 
-    let mut buffer = [0; 8192];
+    println!("Send OK");
 
+    let mut buffer = [0; 8192];
     receive(&mut buffer, stream);
+
+    println!("Buffer : {:#?}", buffer.to_vec());
+    println!("Challenge : {:#?}", challenge.clone());
 
     if buffer.to_vec() != challenge.clone() {
         write_log("Authentication failed : wrong challenge client side".to_owned());

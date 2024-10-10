@@ -8,19 +8,30 @@ pub fn auth_self(stream: &mut TcpStream, id: String, client_challenge_key: &RsaK
     let mut buffer = [0; 8192];
     receive(&mut buffer, stream);
 
-    if vec_u8_to_hex_string(buffer.to_vec()) != utf8_to_hex_string("Start auth") {
+    if vec_u8_to_hex_string(buffer[..10].to_vec()) != utf8_to_hex_string("Start auth") {
         write_log("Authentication failed : authentication did not start".to_string());
         return false;
     }
+    
+    let id_to_send = id.clone();
+    let pub_key_0_to_send = biguint_to_hex_string(client_challenge_key.public_key.0.clone());
+    let pub_key_1_to_send = biguint_to_hex_string(client_challenge_key.public_key.1.clone());
 
-    send(&mut hex_string_to_bytes(&[id.clone(), "|".to_string(), biguint_to_hex_string(client_challenge_key.public_key.0.clone()), "|".to_string(), biguint_to_hex_string(client_challenge_key.public_key.1.clone())].concat()), stream);
+    println!("len id : {}", id_to_send.len().to_string());
+    println!("len key 0 : {}", pub_key_0_to_send.len());
+    println!("len key 1 : {}", pub_key_1_to_send.len());
+
+    send(&mut hex_string_to_bytes(&[id_to_send.len().to_string(), id_to_send.clone(), pub_key_0_to_send.clone(), pub_key_1_to_send.clone()].concat()), stream);
+
+    println!("Key 1 : {:#?}", client_challenge_key.public_key.0);
+    println!("Key 2 : {:#?}", client_challenge_key.public_key.1);
 
     let mut buffer = [0; 8192];
     receive(&mut buffer, stream);
-
+    println!("Receive OK");
     let decrypted_challenge = get_challenge(client_challenge_key, vec_u8_to_hex_string(buffer.to_vec()));
-
-    send(&mut hex_string_to_bytes(&decrypted_challenge), stream);
+    println!("Challenge decrypted");
+    send(&mut hex_string_to_bytes(&('0'.to_string() + &decrypted_challenge)), stream);
 
     let mut buffer = [0; 8192];
     receive(&mut buffer, stream);
